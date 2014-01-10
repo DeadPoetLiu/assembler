@@ -8,11 +8,13 @@ const int CN=21;
 const char * commandTable[]={"ldc","adc","ldl","stl","ldnl","stnl",
 	                "add","sub","shl","shr",
 				    "adj","a2sp","sp2a","call","return",
-					"brz","brlz","br","HALT","data","SET"};
+				"brz","brlz","br","HALT","data","SET"};
 
+#define M 1000
+unsigned int memory[1000];
 Map map;
 int counter=0;
-
+int line=0;
 
 typedef struct {
 	int line;
@@ -31,8 +33,14 @@ typedef struct {
  }
 
 
+ 
+
  void processInstruction(const char * op,const char * v, int num){
+
+
 	 int u=getOpCode(op);
+	 int ins=u;
+	 int val=0;
 	 if(u==-1){
 		 printf("error no instruction\n");
 	 }
@@ -47,7 +55,21 @@ typedef struct {
 
 	 }else{
 		 if(num==2){
+			 int t=getKey(&map,v);
 
+			 if(t!=-1){
+				 if(t>=13&&t<=17){
+					 val=t-counter;
+
+				 }else{
+					 val=t;
+				 }
+
+			 }else{
+
+				 val=strtol(v,NULL,0);
+
+			 }
 
 
 		 }else{
