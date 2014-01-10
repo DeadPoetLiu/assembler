@@ -32,14 +32,18 @@ typedef struct {
 	return -1;
  }
 
-
+ unsigned int complement(int x)
+ {
+	 // to do
+	 return 0;
+ }
  
 
  void processInstruction(const char * op,const char * v, int num){
 
 
 	 int u=getOpCode(op);
-	 int ins=u;
+	 unsigned int ins=u;
 	 int val=0;
 	 if(u==-1){
 		 printf("error no instruction\n");
@@ -80,7 +84,7 @@ typedef struct {
 
 	 }
 
-
+	 memory[counter]=complement(val)<<8+ins;
 }
 
 
