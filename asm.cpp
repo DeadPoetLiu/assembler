@@ -1,11 +1,81 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include "mymap.h"
+
+const int operandNum[]={1,1,2,2,2,2,0,0,0,0,1,0,0,2,0,2,2,2,0,1,1};
+const int CN=21;
+const char * commandTable[]={"ldc","adc","ldl","stl","ldnl","stnl",
+	                "add","sub","shl","shr",
+				    "adj","a2sp","sp2a","call","return",
+					"brz","brlz","br","HALT","data","SET"};
+
+Map map;
+int counter=0;
+
+
+typedef struct {
+	int line;
+	int type;
+}Error;
+
+
+ int getOpCode(const char * cn)
+{
+	for(int i=0;i<CN;i++)
+	{
+		if(strcmp(cn,commandTable[i])==0)
+			return i;
+	}
+	return -1;
+ }
+
+
+ void processInstruction(const char * op,const char * v, int num){
+	 int u=getOpCode(op);
+	 if(u==-1){
+		 printf("error no instruction\n");
+	 }
+	 if(operandNum[u]==0){
+		 if(num==1){
+
+
+		 }else{
+
+			 "too many operand";
+		 }
+
+	 }else{
+		 if(num==2){
+
+
+
+		 }else{
+
+			 "missing operand";
+		 }
+
+
+	 }
+
+
+}
+
+
+void processLabel(const char * l)
+{
+	if(getKey(&map,l)==-1){
+		putKeyValue(&map,l,counter);
+
+	}else{
+		printf("redefinition");
+	}
+}
 
 
 
 
-void processLine( char * line)
+void processLine( char * line,int pass)
 {
 	int i;
 	for(i=0;i<strlen(line);i++)
@@ -28,6 +98,13 @@ void processLine( char * line)
 			sscanf(line,"%s",label);
 			printf("Label---  %s  ",label);
 			statement=line+(i+1);
+			if(pass==1){
+
+				processLabel(label);
+
+			}
+
+
 			break;
 		}
 
@@ -39,6 +116,18 @@ void processLine( char * line)
 	char operand[10];
 
 	int ns=sscanf(statement,"%s %s",mne,operand);
+	if(ns>0){
+
+		counter++;
+	}
+
+	if(pass==2){
+
+		processInstruction(mne,operand,ns);
+
+	}
+
+
 	if(ns==1){
 		printf("%s",mne);
 	}else if(ns==2){
@@ -46,6 +135,14 @@ void processLine( char * line)
 	}
 	printf("\n");
 }
+
+
+
+
+
+
+
+
 
 void input(const char * code)
 {
