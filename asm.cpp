@@ -1,25 +1,93 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include <ctype.h>
 #include "mymap.h"
+
+enum{
+    nosuchlabel,
+    boguslabel,
+    bogusmnemonic,
+    
+    missingoperand,
+    unexpectedoperand,
+    duplicatedlabel,
+    notanumber
+    
+};
+
+const char * errorinfor[]={"no such label","bogus label name","bogus mnemonic","missing operand","unexpected operand","duplicate label definition","not a number"};
+
 
 const int operandNum[]={1,1,2,2,2,2,0,0,0,0,1,0,0,2,0,2,2,2,0,1,1};
 const int CN=21;
 const char * commandTable[]={"ldc","adc","ldl","stl","ldnl","stnl",
 	                "add","sub","shl","shr",
 				    "adj","a2sp","sp2a","call","return",
-				"brz","brlz","br","HALT","data","SET"};
+"brz","brlz","br","HALT","data","SET"};
+
+#define M 1000
+int hasLabel[1000];
 
 #define M 1000
 unsigned int memory[1000];
+
+typedef struct{
+    int line;
+    int err;
+} Error;
+
+
+void outputError(FILE * f,Error e){
+    fprintf(f,"line %d: %s\n", e.line,errorinfor[e.err]);
+}
+
+Error errors[1000];
+
+int ei=0;
+
+
+
+
 Map map;
 int counter=0;
 int line=0;
 
-typedef struct {
-	int line;
-	int type;
-}Error;
+void printNumber(FILE * file,unsigned int num)
+{
+    static char temp[10];
+    sprintf(temp, "%08x",num);
+    
+    for(int i=0;i<strlen(temp);i++)
+    {
+        temp[i]=toupper(temp[i]);
+    }
+    
+    fprintf(file, "%s",temp);
+    
+}
+
+void outputObj(FILE * file)
+{
+    for(int i=0;i<counter;i++){
+        printNumber(file, memory[i]);
+        fprintf(file, "\n");
+    }
+}
+
+void outputList(FILE * f)
+{
+    
+    
+}
+
+
+void addError( int e){
+    
+    errors[ei].line=line;
+    errors[ei].err=e;
+    ei++;
+}
 
 
  int getOpCode(const char * cn)
@@ -42,53 +110,99 @@ typedef struct {
      else
          return u+x;
 }
- 
+
+
+void printError(FILE * file)
+{
+    int i;
+    for(i=0;i<ei;i++)
+    {
+        outputError(file, errors[i]);
+    }
+    
+    
+}
 
  void processInstruction(const char * op,const char * v, int num){
-
-
+     if(num==0)
+         return;
+     
 	 int u=getOpCode(op);
 	 unsigned int ins=u;
 	 int val=0;
 	 if(u==-1){
-		 printf("error no instruction\n");
+		 //printf("error no instruction\n");
+         addError(bogusmnemonic);
+         
 	 }
 	 if(operandNum[u]==0){
 		 if(num==1){
-
+            
 
 		 }else{
 
-			 "too many operand";
+			 addError(unexpectedoperand);
 		 }
 
 	 }else{
 		 if(num==2){
 			 int t=getKey(&map,v);
+             
+             printf("___ %d ___",t);
+             
+             
 
 			 if(t!=-1){
-				 if(t>=13&&t<=17){
-					 val=t-counter;
+				 if(u>=13&&u<=17){
+                     
+                     printf("\n*****%d %d***\n",t,counter);
+					 val=t-counter-1;
 
 				 }else{
 					 val=t;
 				 }
 
 			 }else{
+                 
+                 if(strlen(v)!=0&&isalpha(v[0])){
+                     addError(nosuchlabel);
+                     return;
+                 }
+                
+                 char * end;
+                 
 
-				 val=strtol(v,NULL,0);
+				 val=strtol(v,&end,0);
+                 
+                 printf("\nnnnn__ %d nnnn__\n",val);
+                 if(end==v||*end != '\0'){
+                     
+                     addError(notanumber);
+                     
+                     printf("Eeeeeee");
+                 }
+                 
+                 printf("success %s %s %d",op,v,val);
+                 
+                 if(u==19){
+                     memory[counter]=val;
+                     return;
+                 }
 
 			 }
 
 
 		 }else{
 
-			 "missing operand";
+			 //"missing operand";
+             
+             addError(missingoperand);
 		 }
 
 
 	 }
 
+     
 	 memory[counter]=(complement(val)<<8)+ins;
 }
 
@@ -97,14 +211,23 @@ void processLabel(const char * l)
 {
 	if(getKey(&map,l)==-1){
 		putKeyValue(&map,l,counter);
+        
+        hasLabel[counter]=1;
 
 	}else{
-		printf("redefinition");
+		//printf("redefinition");
+        
+        addError(duplicatedlabel);
 	}
 }
 
 
-
+void testLabel(const char * l)
+{
+    if(strlen(l)==0||! isalpha(l[0])){
+        addError(boguslabel);
+    }
+}
 
 void processLine( char * line,int pass)
 {
@@ -134,6 +257,11 @@ void processLine( char * line,int pass)
 				processLabel(label);
 
 			}
+            if(pass==2)
+            {
+                testLabel(label);
+            }
+            
 
 
 			break;
@@ -147,15 +275,17 @@ void processLine( char * line,int pass)
 	char operand[10];
 
 	int ns=sscanf(statement,"%s %s",mne,operand);
-	if(ns>0){
+	
 
-		counter++;
-	}
-
-	if(pass==2){
+	if(pass==2&&ns>0){
 
 		processInstruction(mne,operand,ns);
 
+	}
+    
+    if(ns>0){
+        
+		counter++;
 	}
 
 
@@ -177,47 +307,56 @@ void processLine( char * line,int pass)
 
 void input(const char * code)
 {
+    counter=0;
 	FILE * file=fopen(code,"r");
 	if(!file)
 	{printf("error");
 	 return;
 	}
-    char line[256];
+    char linestr[256];
 	
-    while( fgets(line,sizeof(line),file)){
+    line=0;
+    while( fgets(linestr,sizeof(linestr),file)){
 
-		processLine(line,1);
+		processLine(linestr,1);
+        
+        line++;
 
     }
     
     fclose(file);
-    
+    line=0;
+    counter=0;
     file=fopen(code,"r");
     
-    while( fgets(line,sizeof(line),file)){
+    while( fgets(linestr,sizeof(linestr),file)){
         
-		processLine(line,2);
-        
+		processLine(linestr,2);
+        line++;
     }
 
     fclose(file);
 
-    
-
 }
+
+void start(){
+    initMap(&map);
+    for(int i=0;i<M;i++){
+        hasLabel[i]=0;
+    }
+   
+    input("/Users/liumeng/assembler/input.txt");
+    
+}
+
+
+
+
 int main()
 {
-    unsigned int x=1<<24;
-    unsigned int t=x-5;
-    unsigned int u=t<<8;
     
-    printf("%x",u);
-    
-    
-	input("input.txt");
-		  
-	system("pause");
-    
-    
+    start();
+    printError(stdout);
+    outputObj(stdout);
     return 0;
 }
