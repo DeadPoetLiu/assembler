@@ -26,6 +26,8 @@ const char * commandTable[]={"ldc","adc","ldl","stl","ldnl","stnl",
 				    "adj","a2sp","sp2a","call","return",
 "brz","brlz","br","HALT","data","SET"};
 
+#define setnum 20
+
 #define M 1000
 int hasLabel[1000];
 
@@ -46,13 +48,27 @@ Error errors[1000];
 
 int ei=0;
 
+int isSet;
 
+int setValue;
 
 
 Map map;
 int counter=0;
 int line=0;
 
+
+void changeRecent(int nl)
+{
+    int x=map.v[map.num-1];
+    hasLabel[map.v[map.num-1]]=0;
+    map.v[map.num-1]=nl;
+    
+    hasLabel[nl]=1;
+    
+    printf("&&&&& %d %d \n",x,nl);
+    
+}
 void printNumber(FILE * file,unsigned int num)
 {
     static char temp[10];
@@ -75,9 +91,34 @@ void outputObj(FILE * file)
     }
 }
 
+void outputlabelline(FILE * f,int l)
+{
+    printNumber(f, l);
+    fprintf(f,"\n");
+}
+
+void outputmemoryline(FILE * f,int l)
+{
+    printNumber(f, l);
+    fprintf(f," ");
+    printNumber(f, memory[l]);
+     fprintf(f,"\n");
+}
+
 void outputList(FILE * f)
 {
-    
+    for(int i=0;i<counter;i++){
+        if(hasLabel[i]){
+            outputlabelline(f, i);
+            
+            
+            
+        }
+        
+        outputmemoryline(f, i);
+        
+        
+    }
     
 }
 
@@ -123,13 +164,18 @@ void printError(FILE * file)
     
 }
 
- void processInstruction(const char * op,const char * v, int num){
+ void processInstruction(const char * op,const char * v, int num,int pass){
      if(num==0)
          return;
      
 	 int u=getOpCode(op);
 	 unsigned int ins=u;
 	 int val=0;
+     if(pass==1&&u!=setnum){
+         isSet=0;
+         return;
+     }
+     
 	 if(u==-1){
 		 //printf("error no instruction\n");
          addError(bogusmnemonic);
@@ -172,7 +218,7 @@ void printError(FILE * file)
                  char * end;
                  
 
-				 val=strtol(v,&end,0);
+				 val=(int)strtol(v,&end,0);
                  
                  printf("\nnnnn__ %d nnnn__\n",val);
                  if(end==v||*end != '\0'){
@@ -201,7 +247,28 @@ void printError(FILE * file)
 
 
 	 }
+     
+     
 
+     
+   
+         
+         if(u==setnum){
+         isSet=1;
+         
+         setValue=val;
+             
+             printf("***********");
+             return;
+        
+         }else{
+             isSet=0;
+         }
+         
+     if(pass==1)
+         return;
+     
+     
      
 	 memory[counter]=(complement(val)<<8)+ins;
 }
@@ -268,22 +335,28 @@ void processLine( char * line,int pass)
 		}
 
 	}
-	
-	
 	char mne[10];
-
+    
 	char operand[10];
-
+    
 	int ns=sscanf(statement,"%s %s",mne,operand);
 	
 
-	if(pass==2&&ns>0){
+	
+	   
+	if(ns>0){
 
-		processInstruction(mne,operand,ns);
+		processInstruction(mne,operand,ns,pass);
 
 	}
+    if(pass==1&&isSet){
+        changeRecent(setValue);
+        printf("((((((");
+        
+    }
     
-    if(ns>0){
+    
+    if(ns>0&&isSet==0){
         
 		counter++;
 	}
@@ -356,7 +429,8 @@ int main()
 {
     
     start();
-    printError(stdout);
+ //   printError(stdout);
     outputObj(stdout);
+    outputList(stdout);
     return 0;
 }
