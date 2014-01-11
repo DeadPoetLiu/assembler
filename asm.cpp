@@ -35,8 +35,13 @@ typedef struct {
  unsigned int complement(int x)
  {
 	 // to do
-	 return 0;
- }
+     static const unsigned int u=1<<24;
+     if(x>=0)
+         return x;
+     
+     else
+         return u+x;
+}
  
 
  void processInstruction(const char * op,const char * v, int num){
@@ -84,7 +89,7 @@ typedef struct {
 
 	 }
 
-	 memory[counter]=complement(val)<<8+ins;
+	 memory[counter]=(complement(val)<<8)+ins;
 }
 
 
@@ -181,14 +186,38 @@ void input(const char * code)
 	
     while( fgets(line,sizeof(line),file)){
 
-		processLine(line);
+		processLine(line,1);
 
     }
+    
+    fclose(file);
+    
+    file=fopen(code,"r");
+    
+    while( fgets(line,sizeof(line),file)){
+        
+		processLine(line,2);
+        
+    }
+
+    fclose(file);
+
+    
 
 }
-void main()
+int main()
 {
+    unsigned int x=1<<24;
+    unsigned int t=x-5;
+    unsigned int u=t<<8;
+    
+    printf("%x",u);
+    
+    
 	input("input.txt");
 		  
 	system("pause");
+    
+    
+    return 0;
 }
