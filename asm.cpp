@@ -19,7 +19,10 @@ enum{
 const char * errorinfor[]={"no such label","bogus label name","bogus mnemonic","missing operand","unexpected operand","duplicate label definition","not a number"};
 
 
-const int operandNum[]={1,1,2,2,2,2,0,0,0,0,1,0,0,2,0,2,2,2,0,1,1};
+const int operandNum[]={1,1,2,2,2,
+                        2,0,0,0,0,
+                        1,0,0,2,0,
+                        2,2,2,0,1,1};
 const int CN=21;
 const char * commandTable[]={"ldc","adc","ldl","stl","ldnl","stnl",
 	                "add","sub","shl","shr",
@@ -232,6 +235,8 @@ void printError(FILE * file)
                  
                  if(u==19){
                      memory[counter]=val;
+                     
+                     printf("%d))))",val);
                      return;
                  }
 
@@ -309,7 +314,7 @@ void processLine( char * line,int pass)
 
 	}
 
-	char label[10];
+	char label[50];
 	char * statement=line;
 	for(i=0;i<strlen(line);i++)
 	{
@@ -335,9 +340,9 @@ void processLine( char * line,int pass)
 		}
 
 	}
-	char mne[10];
+	char mne[50];
     
-	char operand[10];
+	char operand[50];
     
 	int ns=sscanf(statement,"%s %s",mne,operand);
 	
@@ -421,16 +426,35 @@ void start(){
     input("/Users/liumeng/assembler/input.txt");
     
 }
-
+void test()
+{
+    const char * statement="g -556882451";
+    char mne[10];
+    
+	char operand[12];
+    
+	int ns=sscanf(statement," %s %s",mne,operand);
+    
+    printf("%s %s",mne,operand);
+}
 
 
 
 int main()
 {
+   // test();
     
-    start();
+   start();
  //   printError(stdout);
     outputObj(stdout);
-    outputList(stdout);
+   // outputList(stdout);
+  //  int x=1358610133;
+ //   int y=-556882451;
+  //  int z=-1061097459;
+ //   printNumber(stdout, x);
+ //   printf("\n");
+//    printNumber(stdout, y);
+  //   printf("\n");
+ //   printNumber(stdout, z);
     return 0;
 }
