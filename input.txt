@@ -1,6 +1,83 @@
-; test3.asm
-; Test SET
-val: SET 75
-ldc val
-adc val2
-val2: SET 66
+; memcpy program and driver for it
+; (C) 2002 Nathan Sidwell
+; This program is available under the terms of the GNU
+; General Public License 2.0 or any later version.
+; http://www.gnu.org/copyleft/gpl.html
+
+; outline of bubble sort program
+        ldc 0x1000
+        a2sp
+        adj -2
+        ldc   10
+        stl   1
+        ldc   src
+        stl   0
+        ldc   dst
+        call  memcpy
+        HALT
+;
+; Areg= return address
+; Breg= dst address
+; SP+0= src address
+; SP+1= number of elements
+; this is directly equivalent to memcpy, and implemented like
+; void memcpy (int *dst, int const *src, int count)
+; {
+;    loop:
+;     if (!count) goto exit;
+;    *dst = *src;
+;    dst++;
+;    src++;
+;    goto loop;
+;  exit: return
+; }
+memcpy: 
+      adj -2
+      stl 0   ; save return addr
+      stl 1   ; save dst address
+loop: ldl 3   ; test count
+      brz done
+
+      ldl 2   ;copy data
+      ldnl 0
+      ldl 1
+      stnl 0
+      ldl 1   ;increment dst
+      adc 1
+      stl 1
+      ldl 2   ;increment src
+      adc 1
+      stl 2
+      ldl 3   ;decrement count
+      adc -1
+      stl 3
+      
+      br loop
+done: ldl 0
+      adj 2
+      return
+
+src:    data    -559038737
+	data    1592639189
+      	data    -1058161986
+	data    1588527317
+        data    -1420028582
+	data    -899895827
+	data    -17958194
+	data    -1061097459
+	data    -556882451
+	data    1358610133
+
+pad:    data 0
+        data 0
+dst:
+        data 0
+        data 0
+        data 0
+        data 0
+        data 0
+        data 0
+        data 0
+        data 0
+        data 0
+        data 0
